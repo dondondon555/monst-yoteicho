@@ -393,7 +393,11 @@ function fmtRange(ev) {
   } else t += ' 〜 終了日未設定';
   return t;
 }
-function catVar(c) { return 'var(' + (CATC[c] || '--k-other') + ')'; }
+function catVar(ev) {
+  if (ev && ev.cat === 'ガチャ' && ev.group === 'reg_gacha') return 'var(--k-collab)';
+  var c = ev && ev.cat;
+  return 'var(' + (CATC[c] || '--k-other') + ')';
+}
 
 /* ---------- UI state ---------- */
 var today0 = new Date();
@@ -436,7 +440,7 @@ function viewNow() {
   var up = evs.filter(function (x) { return x.s > now && x.s - now <= 30 * 864e5; }).sort(function (a, b) { return a.s - b.s; });
 
   function item(x, right, hot) {
-    return '<button class="ev" style="--k:' + catVar(x.ev.cat) + '" data-act="edit" data-id="' + esc(x.ev.id) + '">' +
+    return '<button class="ev" style="--k:' + catVar(x.ev) + '" data-act="edit" data-id="' + esc(x.ev.id) + '">' +
       '<span class="kdot"></span><span class="body"><span class="en">' + esc(x.ev.name) + '</span>' +
       '<span class="es">' + esc(x.ev.cat) + ' ・ ' + esc(fmtRange(x.ev)) + '</span></span>' +
       '<span class="er' + (hot ? ' hot' : '') + '">' + right + '</span></button>';
@@ -487,8 +491,8 @@ function viewMonth() {
     });
     var dots = [];
     evs.forEach(function (x) {
-      if (ds(x.s) === key) dots.push('<b class="dot" style="background:' + catVar(x.ev.cat) + '"></b>');
-      else if (x.e && ds(x.e) === key) dots.push('<b class="dot ring" style="border-color:' + catVar(x.ev.cat) + '"></b>');
+      if (ds(x.s) === key) dots.push('<b class="dot" style="background:' + catVar(x.ev) + '"></b>');
+      else if (x.e && ds(x.e) === key) dots.push('<b class="dot ring" style="border-color:' + catVar(x.ev) + '"></b>');
     });
     h += '<button class="cell' + (key === todayS ? ' today' : '') + (key === ui.sel ? ' sel' : '') + '" data-act="day" data-d="' + key + '" aria-label="' + (m + 1) + '月' + d + '日">' +
       '<span class="n">' + d + '</span><span class="sts">' + stripes + '</span><span class="dots">' + dots.slice(0, 6).join('') + '</span></button>';
@@ -524,7 +528,7 @@ function dayDetail(key) {
     if (ds(s) === key) lab = '開始' + (ev.sTime ? ' ' + ev.sTime : '');
     else if (e && ds(e) === key) lab = '終了' + (ev.eTime ? ' ' + ev.eTime : '');
     else lab = '開催中';
-    items += '<button class="di" style="--c:' + catVar(ev.cat) + '" data-act="edit" data-id="' + esc(ev.id) + '"><span class="dn">' + esc(ev.name) + '</span><span class="dl">' + lab + '</span></button>';
+    items += '<button class="di" style="--c:' + catVar(ev) + '" data-act="edit" data-id="' + esc(ev.id) + '"><span class="dn">' + esc(ev.name) + '</span><span class="dl">' + lab + '</span></button>';
   });
   var h = '<div class="detail"><h3>' + mo + '月' + d + '日(' + WD[dayS.getDay()] + ')</h3>';
   h += items || '<p class="empty">この日の予定はありません。</p>';
@@ -674,7 +678,7 @@ function viewSettings() {
   h += '<h2>取り込んだ予定(' + state.events.length + '件)</h2>';
   if (!state.events.length) h += '<p class="empty">まだありません。</p>';
   state.events.slice().sort(function (a, b) { return evStart(b) - evStart(a); }).slice(0, 100).forEach(function (ev) {
-    h += '<button class="ev" style="--k:' + catVar(ev.cat) + '" data-act="edit" data-id="' + esc(ev.id) + '"><span class="kdot"></span><span class="body"><span class="en">' + esc(ev.name) + '</span><span class="es">' + esc(ev.cat) + ' ・ ' + esc(fmtRange(ev)) + '</span></span></button>';
+    h += '<button class="ev" style="--k:' + catVar(ev) + '" data-act="edit" data-id="' + esc(ev.id) + '"><span class="kdot"></span><span class="body"><span class="en">' + esc(ev.name) + '</span><span class="es">' + esc(ev.cat) + ' ・ ' + esc(fmtRange(ev)) + '</span></span></button>';
   });
   h += '<div class="btns"><button class="btn" data-act="addOn" data-d="' + ds(new Date()) + '">予定を手で追加</button></div>';
 
