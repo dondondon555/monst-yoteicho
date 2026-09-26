@@ -393,6 +393,7 @@ function fmtRange(ev) {
   } else t += ' 〜 終了日未設定';
   return t;
 }
+function visibleEvents() { return state.events.filter(function (e) { return !e.parent; }); }
 function catVar(ev) {
   if (ev && ev.cat === 'ガチャ' && ev.group === 'reg_gacha') return 'var(--k-collab)';
   var c = ev && ev.cat;
@@ -434,7 +435,7 @@ function viewNow() {
     }
   });
 
-  var evs = state.events.map(function (ev) { return { ev: ev, s: evStart(ev), e: evEnd(ev) }; });
+  var evs = visibleEvents().map(function (ev) { return { ev: ev, s: evStart(ev), e: evEnd(ev) }; });
   var active = evs.filter(function (x) { return x.e && x.s <= now && now <= x.e; }).sort(function (a, b) { return a.e - b.e; });
   var unset = evs.filter(function (x) { return !x.e && x.s <= now && now - x.s <= 14 * 864e5; }).sort(function (a, b) { return b.s - a.s; });
   var up = evs.filter(function (x) { return x.s > now && x.s - now <= 30 * 864e5; }).sort(function (a, b) { return a.s - b.s; });
@@ -470,7 +471,7 @@ function viewMonth() {
   var days = new Date(y, m + 1, 0).getDate();
   var occs = occsAround(y, m);
   var rules = state.rules.filter(function (r) { return r.on; });
-  var evs = state.events.map(function (ev) { return { ev: ev, s: evStart(ev), e: evEnd(ev) }; });
+  var evs = visibleEvents().map(function (ev) { return { ev: ev, s: evStart(ev), e: evEnd(ev) }; });
   var todayS = ds(new Date());
   var h = '<div class="mnav"><button class="iconbtn" data-act="prev" aria-label="前の月">‹</button>' +
     '<span class="ttl">' + y + '年' + (m + 1) + '月</span>' +
@@ -520,7 +521,7 @@ function dayDetail(key) {
     else lab = '開催中(〜' + fmtD(o.end) + ')';
     items += '<div class="di" style="--c:var(' + (ELEM[r.color] || ELEM.fire).v + ')"><span class="dn">' + esc(r.name) + '</span><span class="dl">' + lab + '</span></div>';
   });
-  state.events.forEach(function (ev) {
+  visibleEvents().forEach(function (ev) {
     var s = evStart(ev), e = evEnd(ev);
     var hit = e ? (s <= dayE && e >= dayS) : ds(s) === key;
     if (!hit) return;
@@ -858,12 +859,12 @@ function renderModal() {
 function showRuleSubs(idx) {
   var g = ui._ruleSubs && ui._ruleSubs[idx]; if (!g) return;
   var rows = g.subs.map(function (ev) {
-    var link = safeUrl(ev.url) ? ' href="' + esc(ev.url) + '" target="_blank" rel="noopener noreferrer"' : '';
-    var tag = safeUrl(ev.url) ? 'a' : 'div';
-    return '<' + tag + ' class="di" style="--c:' + catVar(ev) + '"' + link + '><span class="dn">' + esc(ev.short || ev.name) + '</span></' + tag + '>';
+    return '<div class="di" style="--c:' + catVar(ev) + '"><span class="dn">' + esc(ev.short || ev.name) + '</span></div>';
   }).join('');
+  var url = (g.subs.filter(function (ev) { return safeUrl(ev.url); })[0] || {}).url;
+  var link = safeUrl(url) ? '<a class="link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">公式の記事を開く</a>' : '';
   $('#modal').innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(g.name) + 'の内訳">' +
-    '<h3>' + esc(g.name) + '</h3><p class="hint" style="margin:0 0 10px">' + esc(g.period) + '</p>' + rows +
+    '<h3>' + esc(g.name) + '</h3><p class="hint" style="margin:0 0 10px">' + esc(g.period) + '</p>' + rows + link +
     '<div class="btns" style="margin-top:10px"><button class="btn" data-act="closeModal">閉じる</button></div></div>';
   $('#modal').hidden = false;
 }
