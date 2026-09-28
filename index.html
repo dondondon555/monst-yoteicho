@@ -386,6 +386,7 @@ function evEnd(ev) {
 }
 function fmtRange(ev) {
   var s = evStart(ev), e = evEnd(ev);
+  if (ev.openEnd) return fmtD(s) + (ev.sTime ? ' ' + ev.sTime : '') + ' 〜';
   var t = fmtD(s) + (ev.sTime ? ' ' + ev.sTime : '');
   if (e) {
     var same = ds(s) === ds(e);
@@ -435,7 +436,7 @@ function viewNow() {
     }
   });
 
-  var evs = visibleEvents().map(function (ev) { return { ev: ev, s: evStart(ev), e: evEnd(ev) }; });
+  var evs = visibleEvents().filter(function (e) { return e.group !== 'update'; }).map(function (ev) { return { ev: ev, s: evStart(ev), e: evEnd(ev) }; });
   var active = evs.filter(function (x) { return x.e && x.s <= now && now <= x.e; }).sort(function (a, b) { return a.e - b.e; });
   var unset = evs.filter(function (x) { return !x.e && x.s <= now && now - x.s <= 14 * 864e5; }).sort(function (a, b) { return b.s - a.s; });
   var up = evs.filter(function (x) { return x.s > now && x.s - now <= 30 * 864e5; }).sort(function (a, b) { return a.s - b.s; });
